@@ -16,6 +16,19 @@
 - Shows findings with a recommended next step, activity log, and local TXT/CSV report export. The recovery result includes copied-file counts and bytes, SHA-256 verification counts, skipped-link counts, and per-file errors.
 - Windows CI builds the Release solution, runs the safety/recovery test harness three times, packages `DriveMedic-windows.zip`, and computes a SHA-256 checksum file.
 
+## Recovery Workbench (version 0.3)
+
+The new start screen adds a copy-first workflow while keeping the original dashboard in **Drive inventory**.
+
+- **Recover files:** queue selected files/folders or the visible top-level contents of a mounted drive, choose a destination, preserve existing destination files, and optionally verify copies with SHA-256. The app warns when Windows maps source and destination to the same physical disk.
+- **Single file:** explicitly consent to a full-file read to compute SHA-256, then queue the file for a safe copy. A hash without a trusted reference does not prove that the file is correct.
+- **Deleted files and partitions:** optional launchers for the separately downloaded TestDisk, PhotoRec, and QPhotoRec portable executables. TestDisk can analyze partitions and certain boot sectors; PhotoRec can carve supported file signatures. These tools are not bundled with DriveMedic.
+- **EFI / Windows / GRUB:** read-only boot/volume diagnostics and guided notes for UEFI, legacy MBR, GRUB, RAW filesystems, and offline Windows system files. Boot-write commands are not executed automatically against a guessed disk.
+
+See [RECOVERY_WORKBENCH.md](RECOVERY_WORKBENCH.md) for operating steps and limits. The upstream [cgsecurity/testdisk](https://github.com/cgsecurity/testdisk) project is GPL-2.0; download official portable binaries only from [CGSecurity](https://www.cgsecurity.org/wiki/TestDisk_Download).
+
+**Recovery is not guaranteed.** Stop using media after accidental deletion, and save recovered files to another physical disk. Data overwritten by new writes generally cannot be reconstructed. A physically unstable disk should be imaged or handled by a professional recovery service.
+
 ## Build
 
 Requirements: Visual Studio 2017 or later with the .NET desktop build tools and the .NET Framework 4.5.2 targeting pack. The 4.5.2 target is chosen to include Windows 8; that runtime is out of support, and Windows 7/8 are themselves legacy systems. On a Windows development machine:
@@ -37,7 +50,7 @@ The app is intentionally not configured to require elevation at launch. Choose *
 
 ## Important limitations
 
-- This is an initial release, not a forensic imaging suite. It does not perform sector imaging, RAID reconstruction, BitLocker unlocking, EFS key recovery, deleted-file carving, or NTFS metadata reconstruction.
+- DriveMedic itself does not perform sector imaging, RAID reconstruction, BitLocker unlocking, EFS key recovery, deleted-file carving, or NTFS metadata reconstruction. Optional launchers can open separately downloaded TestDisk/PhotoRec tools; see RECOVERY_WORKBENCH.md.
 - Windows may not expose physical-disk identity/SMART data for a volume. In that case the health state stays `Unknown`; DriveMedic avoids making a fabricated “healthy” claim.
 - The OS volume and the firmware/system boot partition can differ. DriveMedic highlights the active Windows OS volume; unmounted EFI/System Reserved partitions may not be browsable in this version.
 - A readability scan can stress a weak disk and reads full file contents. Use it selectively and do not run it first on a drive that may be mechanically failing.

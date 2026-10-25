@@ -43,7 +43,7 @@ jobs:
           $stage = Join-Path $PWD "artifact"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item "bin\Release\DriveMedic.exe" $stage
-          Copy-Item -Path @("README.md", "LICENSE", "CHANGELOG.md", "TECHNICIAN_WORKFLOW.md") -Destination $stage
+          Copy-Item -Path @("README.md", "LICENSE", "CHANGELOG.md", "TECHNICIAN_WORKFLOW.md", "RECOVERY_WORKBENCH.md") -Destination $stage
           if (Test-Path "bin\Release\DriveMedic.exe.config") { Copy-Item "bin\Release\DriveMedic.exe.config" $stage }
           Compress-Archive -Path (Join-Path $stage "*") -DestinationPath "DriveMedic-windows.zip" -Force
           $hash = (Get-FileHash "DriveMedic-windows.zip" -Algorithm SHA256).Hash.ToLowerInvariant()

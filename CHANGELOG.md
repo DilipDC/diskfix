@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0.0 — Recovery Workbench
+
+- Added a new recovery-first start screen while retaining the existing inventory/diagnostics dashboard in an embedded tab.
+- Added whole-mounted-drive queueing, multi-file/folder selection, physical-disk destination warnings, and verified copy-only recovery.
+- Added single-file read/hash and queue-for-copy actions with explicit full-read acknowledgement.
+- Added optional launchers for separately downloaded TestDisk, PhotoRec, and QPhotoRec; third-party binaries are not bundled.
+- Added read-only BCD, volume, WinRE and partition diagnostics plus EFI, MBR, GRUB, RAW-filesystem and offline-Windows guidance.
+- Added a recovery workbench guide and updated CI/local build packaging.
+
+
 ## 0.2.0.0 — Source package update
 
 - Added optional SHA-256 verification for recovered copies. Source bytes are hashed during the copy read; the staged destination is hashed before it is published.

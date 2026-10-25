@@ -12,6 +12,14 @@ Use this checklist when a Windows SSD no longer boots but another Windows instal
 8. **Repair only with informed approval.** `CHKDSK X: /f` modifies filesystem metadata and is blocked by DriveMedic when a hardware warning or RAW/unknown filesystem is identified. Back up or image first. SFC repairs only the currently running Windows installation; it is not an offline repair utility for an old Windows installation on a secondary SSD.
 9. **Verify before closing the job.** Reopen representative recovered files from the destination, ensure the source was not selected as the destination, save the report, and record any unresolved errors or encryption limitations.
 
+## Recovery Workbench additions
+
+- The **Recover files** tab can queue individual files/folders or the visible top-level contents of a mounted drive. Save output to a different physical disk and leave SHA-256 verification enabled when practical.
+- The **Single file** tab reads every byte only after acknowledgement and reports a SHA-256 hash. This is a readability/fingerprint check, not a universal corruption detector or file repair mechanism.
+- For deleted files or lost partitions, download the official [TestDisk & PhotoRec portable ZIP](https://www.cgsecurity.org/wiki/TestDisk_Download), extract all files/subfolders, select that folder in the **Deleted files & partitions** tab, then launch TestDisk, PhotoRec, or QPhotoRec. Use a separate destination disk.
+- The **EFI / Windows / GRUB** tab collects read-only diagnostics for the currently running Windows instance and provides guided notes. It does not automatically repair an attached offline PC.
+- Deleted-file recovery is not guaranteed. Stop writing to the source; overwritten sectors cannot be recreated. Generic one-click repair of arbitrary file formats is not possible without file-specific validation or trusted replacement data.
+
 ## Important boundaries
 
 - DriveMedic does not bypass BitLocker, EFS, access controls, firmware locks, or customer authorization.

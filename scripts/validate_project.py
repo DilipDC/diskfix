@@ -146,7 +146,7 @@ def main():
     if "PhysicalDiskIndex" not in (ROOT / "Models" / "DriveRecord.cs").read_text(encoding="utf-8"):
         fail("Drive records must retain the mapped physical-disk identity")
     assembly_info = (ROOT / "Properties" / "AssemblyInfo.cs").read_text(encoding="utf-8")
-    if 'AssemblyVersion("0.2.0.0")' not in assembly_info:
+    if 'AssemblyVersion("0.3.0.0")' not in assembly_info:
         fail("Assembly version must reflect the current source package version")
 
     test_source = (ROOT / "DriveMedic.Tests" / "Program.cs").read_text(encoding="utf-8")

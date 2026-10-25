@@ -33,7 +33,7 @@ $stage = Join-Path $root 'artifact'
 if (Test-Path $stage) { Remove-Item -Path $stage -Recurse -Force }
 New-Item -ItemType Directory -Path $stage | Out-Null
 Copy-Item $releaseExe $stage
-foreach ($document in @('README.md', 'LICENSE', 'CHANGELOG.md', 'TECHNICIAN_WORKFLOW.md')) {
+foreach ($document in @('README.md', 'LICENSE', 'CHANGELOG.md', 'TECHNICIAN_WORKFLOW.md', 'RECOVERY_WORKBENCH.md')) {
     Copy-Item (Join-Path $root $document) $stage
 }
 $config = Join-Path $root 'bin\Release\DriveMedic.exe.config'
