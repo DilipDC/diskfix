@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+      - name: Locate MSBuild
+        uses: microsoft/setup-msbuild@v2
       - name: Set up Python for source validation
         uses: actions/setup-python@v5
         with:
