@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using DriveMedic.Core;
 
 namespace DriveMedic.Tests
@@ -11,6 +12,9 @@ namespace DriveMedic.Tests
 
         private static int Main()
         {
+            Run("file browser all-files mode includes hidden files", TestBrowseIncludesHiddenFiles);
+            Run("file browser hidden mode includes descendants of hidden folders", TestBrowseHiddenFolderContents);
+            Run("file browser application filter finds installers", TestBrowseApplicationInstallers);
             Run("hardware warning always blocks generic repair", TestHardwareWarningPriority);
             Run("RAW volume is routed to recovery, not CHKDSK", TestRawVolume);
             Run("access denied recommends administrator retry", TestAccessDenied);
@@ -190,6 +194,59 @@ namespace DriveMedic.Tests
             if (left == null || right == null || left.Length != right.Length) return false;
             for (int index = 0; index < left.Length; index++) if (left[index] != right[index]) return false;
             return true;
+        }
+
+        private static void TestBrowseIncludesHiddenFiles()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "DriveMedicTest-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            string visible = Path.Combine(root, "visible.txt");
+            string hidden = Path.Combine(root, "hidden.txt");
+            File.WriteAllText(visible, "visible");
+            File.WriteAllText(hidden, "hidden");
+            File.SetAttributes(hidden, File.GetAttributes(hidden) | FileAttributes.Hidden);
+            try
+            {
+                FileBrowseScanResult result = new FileBrowseService().Scan(root, FileBrowseMode.AllFiles, System.Threading.CancellationToken.None, null);
+                Equal(true, result.Files.Any(item => item.Name == "visible.txt"));
+                Equal(true, result.Files.Any(item => item.Name == "hidden.txt"));
+                Equal(true, result.Files.First(item => item.Name == "hidden.txt").IsHiddenOrSystem);
+            }
+            finally { try { Directory.Delete(root, true); } catch { } }
+        }
+
+        private static void TestBrowseHiddenFolderContents()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "DriveMedicTest-" + Guid.NewGuid().ToString("N"));
+            string hiddenFolder = Path.Combine(root, ".hidden");
+            Directory.CreateDirectory(hiddenFolder);
+            string nested = Path.Combine(hiddenFolder, "inside.exe");
+            File.WriteAllText(nested, "app");
+            File.SetAttributes(hiddenFolder, File.GetAttributes(hiddenFolder) | FileAttributes.Hidden);
+            try
+            {
+                FileBrowseScanResult result = new FileBrowseService().Scan(root, FileBrowseMode.HiddenAndSystem, System.Threading.CancellationToken.None, null);
+                Equal(1, result.Files.Count);
+                Equal("inside.exe", result.Files[0].Name);
+                Equal(true, result.Files[0].IsHiddenOrSystem);
+            }
+            finally { try { Directory.Delete(root, true); } catch { } }
+        }
+
+        private static void TestBrowseApplicationInstallers()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "DriveMedicTest-" + Guid.NewGuid().ToString("N"));
+            string downloads = Path.Combine(root, "Downloads");
+            Directory.CreateDirectory(downloads);
+            File.WriteAllText(Path.Combine(downloads, "setup.exe"), "installer");
+            File.WriteAllText(Path.Combine(downloads, "manual.pdf"), "manual");
+            try
+            {
+                FileBrowseScanResult result = new FileBrowseService().Scan(root, FileBrowseMode.ApplicationsAndInstallers, System.Threading.CancellationToken.None, null);
+                Equal(1, result.Files.Count);
+                Equal("setup.exe", result.Files[0].Name);
+            }
+            finally { try { Directory.Delete(root, true); } catch { } }
         }
 
         private static void TestValidDriveRoot()

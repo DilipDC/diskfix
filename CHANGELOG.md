@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0.0 — Find & manage files
+
+- Added a guided file browser for mounted disks and recovered-output folders, including all accessible files, hidden/system files, Downloads folders, application installers, documents, media, and recently modified files.
+- Added search, multi-select, open-containing-folder, copy selected/all, move selected/all with SHA-256 verification before source removal, and Recycle Bin deletion with confirmation.
+- Added a way to review QPhotoRec output inside DriveMedic after a deleted-file scan.
+- Added regression tests for hidden-file inclusion, hidden parent directories, and application-installer filtering.
+
+
 ## 0.4.0.0 — Bundled graphical recovery tools
 
 - Embedded the official TestDisk & PhotoRec 7.2 Windows x64 and x86 archives into DriveMedic.exe; the app extracts the matching architecture automatically on first use.

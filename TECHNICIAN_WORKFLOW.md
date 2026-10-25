@@ -14,9 +14,9 @@ Use this checklist when a Windows SSD no longer boots but another Windows instal
 
 ## Recovery Workbench additions
 
-- The **Recover files** tab can queue individual files/folders or the visible top-level contents of a mounted drive. Save output to a different physical disk and leave SHA-256 verification enabled when practical.
+- The **Find & manage** tab scans mounted volumes/folders and supports all accessible files, hidden/system entries, Downloads, application installers, documents, media and recent changes. Use checkboxes for single/multiple files, or Copy/Move all shown. Move verifies a destination copy before deleting the source; Delete sends selected files to the Recycle Bin where supported.
 - The **Single file** tab reads every byte only after acknowledgement and reports a SHA-256 hash. This is a readability/fingerprint check, not a universal corruption detector or file repair mechanism.
-- For deleted files or lost partitions, use DriveMedic's **Recovery tools** tab. The official TestDisk & PhotoRec 7.2 x64/x86 archives are bundled inside the EXE, extracted automatically on first use, and require no manual download. Choose **Recover deleted files (GUI)** for QPhotoRec. Use **Find lost partitions / boot** for TestDisk, whose upstream interface is keyboard/menu-based. Always recover to a different physical disk.
+- For deleted files, choose **Recover deleted files (GUI)** from **Find & manage**. Select the correct physical disk inside QPhotoRec and save output to another disk. Return to DriveMedic and choose **Browse recovered output** to list recovered items and copy/move individually or in bulk. Deleted-sector entries cannot be listed by ordinary Windows directory enumeration; PhotoRec must scan/recover content first. TestDisk remains available for lost partitions and uses its upstream keyboard/menu interface.
 - The **EFI / Windows / GRUB** tab collects read-only diagnostics for the currently running Windows instance and provides guided notes. It does not automatically repair an attached offline PC.
 - Deleted-file recovery is not guaranteed. Stop writing to the source; overwritten sectors cannot be recreated. Generic one-click repair of arbitrary file formats is not possible without file-specific validation or trusted replacement data.
 

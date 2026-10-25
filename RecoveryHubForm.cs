@@ -97,6 +97,7 @@ namespace DriveMedic
                 Font = new Font("Segoe UI", 9.5F), HotTrack = true
             };
             _tabs.TabPages.Add(BuildHomeTab());
+            _tabs.TabPages.Add(BuildBrowseTab());
             _tabs.TabPages.Add(BuildCopyTab());
             _tabs.TabPages.Add(BuildFileTab());
             _tabs.TabPages.Add(BuildToolsTab());
@@ -151,12 +152,12 @@ namespace DriveMedic
             layout.Controls.Add(MakeTaskCard(
                 "Fix startup, EFI, or GRUB",
                 "Get guided steps for Windows boot problems, EFI/BCD, legacy boot, Linux GRUB, and RAW disks.",
-                "Open boot help", Color.FromArgb(112, 82, 170), delegate { _tabs.SelectedIndex = 4; }), 0, 2);
+                "Open boot help", Color.FromArgb(112, 82, 170), delegate { _tabs.SelectedIndex = 5; }), 0, 2);
 
             layout.Controls.Add(MakeTaskCard(
                 "Check disk health",
                 "Review detected drives, capacity, file system, health warnings, and diagnostics.",
-                "View disk information", Color.FromArgb(190, 112, 35), delegate { _tabs.SelectedIndex = 5; }), 1, 2);
+                "View disk information", Color.FromArgb(190, 112, 35), delegate { _tabs.SelectedIndex = 6; }), 1, 2);
 
             Panel safety = new Panel
             {
@@ -209,9 +210,18 @@ namespace DriveMedic
             return card;
         }
 
+        private TabPage BuildBrowseTab()
+        {
+            TabPage page = MakeTab("Find & manage");
+            RecoveryBrowserControl browser = new RecoveryBrowserControl { Dock = DockStyle.Fill };
+            browser.RecoverDeletedFilesRequested += delegate { StartGraphicalDeletedRecovery(); };
+            page.Controls.Add(browser);
+            return page;
+        }
+
         private TabPage BuildCopyTab()
         {
-            TabPage page = MakeTab("Recover files");
+            TabPage page = MakeTab("Recovery queue");
             TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 6, Padding = new Padding(10), BackColor = Canvas };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 61));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 43));
@@ -289,7 +299,7 @@ namespace DriveMedic
             layout.Controls.Add(checks, 0, 2);
             FlowLayoutPanel actions = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(0, 4, 0, 0) };
             actions.Controls.Add(Button("Queue for safe recovery copy", Blue, Color.White, QueueFile));
-            actions.Controls.Add(Button("Deleted-file tools", Color.White, Dark, delegate { _tabs.SelectedIndex = 3; }));
+            actions.Controls.Add(Button("Deleted-file tools", Color.White, Dark, delegate { _tabs.SelectedIndex = 4; }));
             actions.Controls.Add(Button("Save report…", Color.White, Dark, delegate { SaveText("DriveMedic-file-report.txt", _fileReport.Text); }));
             layout.Controls.Add(actions, 0, 3);
             _fileReport = new TextBox { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, WordWrap = false, Font = new Font("Consolas", 9F), BackColor = Color.White, Text = "No file inspected. For a failing disk, recover critical files before doing full-file scans." };
@@ -566,7 +576,7 @@ namespace DriveMedic
             string path = _filePath.Text.Trim();
             if (!File.Exists(path)) { MessageBox.Show(this, "Choose an existing file.", "Queue file", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
             AddSource(path);
-            _tabs.SelectedIndex = 0;
+            _tabs.SelectedIndex = 2;
             MessageBox.Show(this, "The file is queued. Select a different physical disk as the destination and start the copy.", "File queued", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -653,7 +663,7 @@ namespace DriveMedic
 
         private void StartGraphicalDeletedRecovery()
         {
-            _tabs.SelectedIndex = 3;
+            _tabs.SelectedIndex = 4;
             LaunchTool(new[] { "qphotorec_win.exe" }, "QPhotoRec — graphical file recovery");
         }
 

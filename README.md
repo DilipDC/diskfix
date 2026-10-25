@@ -17,13 +17,13 @@
 - Windows CI builds the Release solution, runs the safety/recovery test harness three times, and packages `DriveMedic-windows.zip` with a SHA-256 checksum.
 - Official TestDisk & PhotoRec 7.2 Windows x64 and x86 archives are downloaded and checksum-verified during the build, embedded into `DriveMedic.exe`, and extracted automatically into the current user's Local AppData folder on first use. Users do not need to manually download or unpack TestDisk.
 
-## Recovery Workbench (version 0.4)
+## Recovery Workbench (version 0.5)
 
 The new start screen adds a copy-first workflow while keeping the original dashboard in **Drive inventory**.
 
-- **Recover files:** queue selected files/folders or the visible top-level contents of a mounted drive, choose a destination, preserve existing destination files, and optionally verify copies with SHA-256. The app warns when Windows maps source and destination to the same physical disk.
+- **Find & manage files:** scan a mounted disk or folder and filter accessible files (including hidden), hidden/system entries, Downloads folders, app installers/packages, documents, media, or recent changes. Search by name/path, open the containing folder, select one or many results, then copy/move to a separate physical disk or send selected existing files to the Recycle Bin. Copy preserves folders and verifies SHA-256; move verifies the destination copy before removing the source.
 - **Single file:** explicitly consent to a full-file read to compute SHA-256, then queue the file for a safe copy. A hash without a trusted reference does not prove that the file is correct.
-- **Deleted files and partitions:** TestDisk & PhotoRec 7.2 are bundled inside `DriveMedic.exe`. The app extracts the official archive automatically on first use. Choose **Recover deleted files (GUI)** to open QPhotoRec, or **Find lost partitions / boot** for TestDisk's keyboard/menu interface. The corresponding upstream source archive is included in the full ZIP package under `ThirdParty/TestDisk`.
+- **Deleted files and partitions:** TestDisk & PhotoRec 7.2 are bundled inside `DriveMedic.exe`. Choose **Recover deleted files (GUI)** to open QPhotoRec, select the old physical disk there, and save recovered output to a different disk. Then choose **Browse recovered output** to list recovered files in DriveMedic and copy/move individual or all results. Deleted files cannot be listed by normal Windows directory enumeration before recovery; file carving may not retain original names or folder structure. The full ZIP includes the corresponding source archive.
 - **EFI / Windows / GRUB:** read-only boot/volume diagnostics and guided notes for UEFI, legacy MBR, GRUB, RAW filesystems, and offline Windows system files. Boot-write commands are not executed automatically against a guessed disk.
 
 See [RECOVERY_WORKBENCH.md](RECOVERY_WORKBENCH.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for operating steps, upstream links, hashes and license information. The bundled recovery executables are downloaded from [CGSecurity](https://www.cgsecurity.org/wiki/TestDisk_Download) during build and verified against published SHA-256 checksums.

@@ -155,12 +155,23 @@ def main():
     if "PhysicalDiskIndex" not in (ROOT / "Models" / "DriveRecord.cs").read_text(encoding="utf-8"):
         fail("Drive records must retain the mapped physical-disk identity")
     assembly_info = (ROOT / "Properties" / "AssemblyInfo.cs").read_text(encoding="utf-8")
-    if 'AssemblyVersion("0.4.0.0")' not in assembly_info:
+    if 'AssemblyVersion("0.5.0.0")' not in assembly_info:
         fail("Assembly version must reflect the current source package version")
+
+    browser_ui = (ROOT / "RecoveryBrowserControl.cs").read_text(encoding="utf-8")
+    browser_service = (ROOT / "Core" / "FileBrowseService.cs").read_text(encoding="utf-8")
+    for token in ("Copy all shown", "Move all shown", "Delete selected", "Browse recovered output"):
+        if token not in browser_ui:
+            fail("File browser action is missing: " + token)
+    for token in ("HiddenAndSystem", "Downloads", "ApplicationsAndInstallers", "FileAttributes.ReparsePoint"):
+        if token not in browser_service:
+            fail("File browser scanning mode/safety is missing: " + token)
+    if "RecoveryBrowserControl.cs" not in (ROOT / "DriveMedic.csproj").read_text(encoding="utf-8") or "Core\\FileBrowseService.cs" not in (ROOT / "DriveMedic.csproj").read_text(encoding="utf-8"):
+        fail("New browser source files are missing from the WinForms project")
 
     test_source = (ROOT / "DriveMedic.Tests" / "Program.cs").read_text(encoding="utf-8")
     test_cases = len(re.findall(r'Run\("', test_source))
-    if test_cases < 17:
+    if test_cases < 20:
         fail(f"Expected at least 17 C# safety tests, found {test_cases}")
     if "SHA-256 verified copy preserves source and reports byte count" not in test_source:
         fail("SHA-256 verification regression test is missing")
