@@ -16,7 +16,7 @@ Use this checklist when a Windows SSD no longer boots but another Windows instal
 
 - The **Recover files** tab can queue individual files/folders or the visible top-level contents of a mounted drive. Save output to a different physical disk and leave SHA-256 verification enabled when practical.
 - The **Single file** tab reads every byte only after acknowledgement and reports a SHA-256 hash. This is a readability/fingerprint check, not a universal corruption detector or file repair mechanism.
-- For deleted files or lost partitions, download the official [TestDisk & PhotoRec portable ZIP](https://www.cgsecurity.org/wiki/TestDisk_Download), extract all files/subfolders, select that folder in the **Deleted files & partitions** tab, then launch TestDisk, PhotoRec, or QPhotoRec. Use a separate destination disk.
+- For deleted files or lost partitions, use DriveMedic's **Recovery tools** tab. The official TestDisk & PhotoRec 7.2 x64/x86 archives are bundled inside the EXE, extracted automatically on first use, and require no manual download. Choose **Recover deleted files (GUI)** for QPhotoRec. Use **Find lost partitions / boot** for TestDisk, whose upstream interface is keyboard/menu-based. Always recover to a different physical disk.
 - The **EFI / Windows / GRUB** tab collects read-only diagnostics for the currently running Windows instance and provides guided notes. It does not automatically repair an attached offline PC.
 - Deleted-file recovery is not guaranteed. Stop writing to the source; overwritten sectors cannot be recreated. Generic one-click repair of arbitrary file formats is not possible without file-specific validation or trusted replacement data.
 

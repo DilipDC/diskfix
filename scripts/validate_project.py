@@ -99,6 +99,15 @@ def main():
             path = (project.parent / entry.attrib["Include"].replace("\\", "/")).resolve()
             if not path.is_file():
                 fail(f"Missing Compile item: {path}")
+    main_project = ET.parse(str(ROOT / "DriveMedic.csproj"))
+    resources = [entry.attrib["Include"].replace("\\", "/") for entry in main_project.findall(".//m:EmbeddedResource", ns)]
+    required_resources = ["tools/testdisk-7.2.win64.zip", "tools/testdisk-7.2.win.zip"]
+    for required in required_resources:
+        if required not in resources:
+            fail(f"Missing embedded upstream recovery resource: {required}")
+        if not (ROOT / required).is_file():
+            fail(f"Recovery bundle hasn't been downloaded and verified yet: {required}")
+
     for source in ROOT.rglob("*.cs"):
         check_delimiters(source)
 
@@ -146,7 +155,7 @@ def main():
     if "PhysicalDiskIndex" not in (ROOT / "Models" / "DriveRecord.cs").read_text(encoding="utf-8"):
         fail("Drive records must retain the mapped physical-disk identity")
     assembly_info = (ROOT / "Properties" / "AssemblyInfo.cs").read_text(encoding="utf-8")
-    if 'AssemblyVersion("0.3.0.0")' not in assembly_info:
+    if 'AssemblyVersion("0.4.0.0")' not in assembly_info:
         fail("Assembly version must reflect the current source package version")
 
     test_source = (ROOT / "DriveMedic.Tests" / "Program.cs").read_text(encoding="utf-8")
@@ -166,12 +175,18 @@ def main():
         fail("Windows CI must package and upload the Release application artifact")
     if "Get-FileHash" not in workflow or "DriveMedic-windows.zip.sha256" not in workflow:
         fail("Windows CI must produce a SHA-256 checksum for the build artifact")
+    if "testdisk-7.2.win64.zip" not in workflow or "testdisk-7.2.win.zip" not in workflow or "e97e203ce77b6b1a3a37d01beccf069dc6c4632b579ffbb82ae739cdda229f38" not in workflow:
+        fail("Windows CI must fetch the pinned official TestDisk archives and verify SHA-256")
+    if "DriveMedic.TestDiskBundle.x64.zip" not in (ROOT / "RecoveryHubForm.cs").read_text(encoding="utf-8") or "qphotorec_win.exe" not in (ROOT / "RecoveryHubForm.cs").read_text(encoding="utf-8"):
+        fail("Recovery UI must extract the embedded bundle and launch graphical QPhotoRec")
     publisher = (ROOT / "PUBLISH_TO_GITHUB.ps1").read_text(encoding="utf-8")
     if "gh repo create" not in publisher or "Invoke-Git -Arguments @('push'" not in publisher or "Invoke-Git -Arguments @('push', '--force'" in publisher:
         fail("Publishing script must create/push normally and must never force-push")
     local_build = (ROOT / "BUILD_WINDOWS.ps1").read_text(encoding="utf-8")
     if "msbuild DriveMedic.sln" not in local_build or "DriveMedic.Tests\\bin\\Release\\DriveMedic.Tests.exe" not in local_build or "Compress-Archive" not in local_build:
         fail("Local Windows build script must compile, run the safety tests, and package the application")
+    if "testdisk-7.2.win64.zip" not in local_build or "testdisk-7.2.tar.bz2" not in local_build:
+        fail("Local build must fetch verified recovery binaries and the corresponding source archive")
     guide = (ROOT / "TECHNICIAN_WORKFLOW.md").read_text(encoding="utf-8")
     if "BitLocker" not in guide or "professional" not in guide or "SHA-256" not in guide:
         fail("Technician workflow must describe encryption limitations, recovery escalation, and copy verification")

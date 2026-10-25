@@ -8,7 +8,7 @@ on:
 jobs:
   build-test:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -18,6 +18,26 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+      - name: Download and verify bundled TestDisk 7.2
+        shell: pwsh
+        run: |
+          $tools = Join-Path $PWD "tools"
+          New-Item -ItemType Directory -Force -Path $tools | Out-Null
+          $bundles = @(
+            @{ Name = "testdisk-7.2.win64.zip"; Url = "https://www.cgsecurity.org/testdisk-7.2.win64.zip"; Sha256 = "e97e203ce77b6b1a3a37d01beccf069dc6c4632b579ffbb82ae739cdda229f38" },
+            @{ Name = "testdisk-7.2.win.zip"; Url = "https://www.cgsecurity.org/testdisk-7.2.win.zip"; Sha256 = "0718a4529611e5f8b6d5fcb873279d23a0b212b18bcf72291f3b47351bfc7126" },
+            @{ Name = "testdisk-7.2.tar.bz2"; Url = "https://www.cgsecurity.org/testdisk-7.2.tar.bz2"; Sha256 = "f8343be20cb4001c5d91a2e3bcd918398f00ae6d8310894a5a9f2feb813c283f" }
+          )
+          foreach ($bundle in $bundles) {
+            $path = Join-Path $tools $bundle.Name
+            Invoke-WebRequest -UseBasicParsing -Uri $bundle.Url -OutFile $path
+            $actual = (Get-FileHash -Path $path -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -ne $bundle.Sha256) {
+              throw "SHA-256 mismatch for $($bundle.Name). Expected $($bundle.Sha256), got $actual."
+            }
+            Write-Host "Verified $($bundle.Name): $actual"
+          }
+
       - name: Validate source structure three times
         shell: pwsh
         run: |
@@ -43,7 +63,10 @@ jobs:
           $stage = Join-Path $PWD "artifact"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item "bin\Release\DriveMedic.exe" $stage
-          Copy-Item -Path @("README.md", "LICENSE", "CHANGELOG.md", "TECHNICIAN_WORKFLOW.md", "RECOVERY_WORKBENCH.md") -Destination $stage
+          Copy-Item -Path @("README.md", "LICENSE", "CHANGELOG.md", "TECHNICIAN_WORKFLOW.md", "RECOVERY_WORKBENCH.md", "THIRD_PARTY_NOTICES.md") -Destination $stage
+          $thirdParty = Join-Path $stage "ThirdParty\TestDisk"
+          New-Item -ItemType Directory -Force -Path $thirdParty | Out-Null
+          Copy-Item (Join-Path $PWD "tools\testdisk-7.2.tar.bz2") (Join-Path $thirdParty "testdisk-7.2.tar.bz2")
           if (Test-Path "bin\Release\DriveMedic.exe.config") { Copy-Item "bin\Release\DriveMedic.exe.config" $stage }
           Compress-Archive -Path (Join-Path $stage "*") -DestinationPath "DriveMedic-windows.zip" -Force
           $hash = (Get-FileHash "DriveMedic-windows.zip" -Algorithm SHA256).Hash.ToLowerInvariant()

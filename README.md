@@ -14,28 +14,28 @@
 - Runs read-only `chkdsk` on a mounted drive and captures its output. A separate, confirmed **Repair filesystem** action opens an interactive elevated command window for `chkdsk X: /f`.
 - Offers current-Windows `sfc /verifyonly` and `sfc /scannow` command launches. SFC targets the currently running Windows installation; it is not an offline repair mechanism.
 - Shows findings with a recommended next step, activity log, and local TXT/CSV report export. The recovery result includes copied-file counts and bytes, SHA-256 verification counts, skipped-link counts, and per-file errors.
-- Windows CI builds the Release solution, runs the safety/recovery test harness three times, packages `DriveMedic-windows.zip`, and computes a SHA-256 checksum file.
+- Windows CI builds the Release solution, runs the safety/recovery test harness three times, and packages `DriveMedic-windows.zip` with a SHA-256 checksum.
+- Official TestDisk & PhotoRec 7.2 Windows x64 and x86 archives are downloaded and checksum-verified during the build, embedded into `DriveMedic.exe`, and extracted automatically into the current user's Local AppData folder on first use. Users do not need to manually download or unpack TestDisk.
 
-## Recovery Workbench (version 0.3)
+## Recovery Workbench (version 0.4)
 
 The new start screen adds a copy-first workflow while keeping the original dashboard in **Drive inventory**.
 
 - **Recover files:** queue selected files/folders or the visible top-level contents of a mounted drive, choose a destination, preserve existing destination files, and optionally verify copies with SHA-256. The app warns when Windows maps source and destination to the same physical disk.
 - **Single file:** explicitly consent to a full-file read to compute SHA-256, then queue the file for a safe copy. A hash without a trusted reference does not prove that the file is correct.
-- **Deleted files and partitions:** optional launchers for the separately downloaded TestDisk, PhotoRec, and QPhotoRec portable executables. TestDisk can analyze partitions and certain boot sectors; PhotoRec can carve supported file signatures. These tools are not bundled with DriveMedic.
+- **Deleted files and partitions:** TestDisk & PhotoRec 7.2 are bundled inside `DriveMedic.exe`. The app extracts the official archive automatically on first use. Choose **Recover deleted files (GUI)** to open QPhotoRec, or **Find lost partitions / boot** for TestDisk's keyboard/menu interface. The corresponding upstream source archive is included in the full ZIP package under `ThirdParty/TestDisk`.
 - **EFI / Windows / GRUB:** read-only boot/volume diagnostics and guided notes for UEFI, legacy MBR, GRUB, RAW filesystems, and offline Windows system files. Boot-write commands are not executed automatically against a guessed disk.
 
-See [RECOVERY_WORKBENCH.md](RECOVERY_WORKBENCH.md) for operating steps and limits. The upstream [cgsecurity/testdisk](https://github.com/cgsecurity/testdisk) project is GPL-2.0; download official portable binaries only from [CGSecurity](https://www.cgsecurity.org/wiki/TestDisk_Download).
+See [RECOVERY_WORKBENCH.md](RECOVERY_WORKBENCH.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for operating steps, upstream links, hashes and license information. The bundled recovery executables are downloaded from [CGSecurity](https://www.cgsecurity.org/wiki/TestDisk_Download) during build and verified against published SHA-256 checksums.
 
 **Recovery is not guaranteed.** Stop using media after accidental deletion, and save recovered files to another physical disk. Data overwritten by new writes generally cannot be reconstructed. A physically unstable disk should be imaged or handled by a professional recovery service.
 
 ## Build
 
-Requirements: Visual Studio 2017 or later with the .NET desktop build tools and the .NET Framework 4.5.2 targeting pack. The 4.5.2 target is chosen to include Windows 8; that runtime is out of support, and Windows 7/8 are themselves legacy systems. On a Windows development machine:
+Requirements: Visual Studio 2017 or later with the .NET desktop build tools, Python 3, network access to official CGSecurity downloads, and the .NET Framework 4.5.2 targeting pack. The build script downloads and checksum-verifies the two Windows tool archives plus matching source before validation, embedding, tests and packaging. The 4.5.2 target includes legacy Windows versions whose support has ended. On Windows, run:
 
 ```powershell
-msbuild DriveMedic.sln /restore /m /p:Configuration=Release
-.\DriveMedic.Tests\bin\Release\DriveMedic.Tests.exe
+.\BUILD_WINDOWS.ps1
 ```
 
 The app is intentionally not configured to require elevation at launch. Choose **Restart as admin** only when needed. A source volume does not have to be the currently booted Windows volume to browse and copy files, but encryption still applies: BitLocker volumes must be unlocked, and EFS files require the proper certificate/key. Administrator access is not an encryption bypass or a guarantee that all ACL-protected data can be read.
@@ -50,7 +50,7 @@ The app is intentionally not configured to require elevation at launch. Choose *
 
 ## Important limitations
 
-- DriveMedic itself does not perform sector imaging, RAID reconstruction, BitLocker unlocking, EFS key recovery, deleted-file carving, or NTFS metadata reconstruction. Optional launchers can open separately downloaded TestDisk/PhotoRec tools; see RECOVERY_WORKBENCH.md.
+- DriveMedic itself does not perform sector imaging, RAID reconstruction, BitLocker unlocking, EFS key recovery, or NTFS metadata reconstruction. It bundles TestDisk/PhotoRec for partition analysis and deleted-file carving; see RECOVERY_WORKBENCH.md.
 - Windows may not expose physical-disk identity/SMART data for a volume. In that case the health state stays `Unknown`; DriveMedic avoids making a fabricated “healthy” claim.
 - The OS volume and the firmware/system boot partition can differ. DriveMedic highlights the active Windows OS volume; unmounted EFI/System Reserved partitions may not be browsable in this version.
 - A readability scan can stress a weak disk and reads full file contents. Use it selectively and do not run it first on a drive that may be mechanically failing.

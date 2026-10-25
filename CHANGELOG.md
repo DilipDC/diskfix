@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0.0 — Bundled graphical recovery tools
+
+- Embedded the official TestDisk & PhotoRec 7.2 Windows x64 and x86 archives into DriveMedic.exe; the app extracts the matching architecture automatically on first use.
+- Added a one-click graphical QPhotoRec launcher for deleted-file recovery and a separately labelled TestDisk partition/boot recovery option.
+- Downloaded upstream archives are SHA-256 verified during Windows and local builds; the full distribution includes the corresponding source archive and third-party notices.
+- Removed the requirement for users to manually download or unpack TestDisk before recovery.
+
+
 ## 0.3.0.0 — Recovery Workbench
 
 - Added a new recovery-first start screen while retaining the existing inventory/diagnostics dashboard in an embedded tab.

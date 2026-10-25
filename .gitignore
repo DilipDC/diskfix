@@ -23,3 +23,7 @@ __pycache__/
 DriveMedic-report-*
 recovery-output/
 customer-data/
+# Official TestDisk 7.2 archives downloaded and SHA-256 verified by build scripts
+tools/testdisk-7.2.win64.zip
+tools/testdisk-7.2.win.zip
+tools/testdisk-7.2.tar.bz2

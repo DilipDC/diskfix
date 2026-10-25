@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -145,7 +146,7 @@ namespace DriveMedic
             layout.Controls.Add(MakeTaskCard(
                 "Recover deleted files",
                 "Try advanced tools for deleted files, lost partitions, or a drive Windows cannot open.",
-                "Open recovery tools", Color.FromArgb(27, 126, 105), delegate { _tabs.SelectedIndex = 3; }), 1, 1);
+                "Open recovery tools", Color.FromArgb(27, 126, 105), delegate { StartGraphicalDeletedRecovery(); }), 1, 1);
 
             layout.Controls.Add(MakeTaskCard(
                 "Fix startup, EFI, or GRUB",
@@ -298,39 +299,78 @@ namespace DriveMedic
 
         private TabPage BuildToolsTab()
         {
-            TabPage page = MakeTab("Deleted-file tools");
-            TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, Padding = new Padding(12), BackColor = Canvas };
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));
+            TabPage page = MakeTab("Recovery tools");
+            TableLayoutPanel layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5,
+                Padding = new Padding(12), BackColor = Canvas
+            };
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 66));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             page.Controls.Add(layout);
+
             layout.Controls.Add(new Label
             {
-                Text = "Optional open-source integration: TestDisk analyzes lost partitions and certain boot sectors; PhotoRec/QPhotoRec carves many deleted files. They are separate downloads and are not bundled into DriveMedic. No tool can guarantee recovery of overwritten data. Save recovered output to a different physical disk.",
-                Dock = DockStyle.Fill, ForeColor = Dark, Padding = new Padding(4, 4, 4, 4), AutoEllipsis = true
+                Text = "TestDisk & PhotoRec are included with this DriveMedic executable. You do not need to download or extract them yourself. The matching 32-bit or 64-bit bundle is unpacked automatically the first time you use a recovery tool.",
+                Dock = DockStyle.Fill, ForeColor = Dark, Padding = new Padding(4, 8, 4, 4),
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular), AutoEllipsis = true
             }, 0, 0);
-            FlowLayoutPanel folder = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, Padding = new Padding(0, 3, 0, 0) };
-            folder.Controls.Add(new Label { Text = "Extracted tool folder", AutoSize = true, ForeColor = Muted, Padding = new Padding(0, 8, 0, 0) });
-            _toolsFolder = new TextBox { Width = 760, Text = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "testdisk"), Font = Font, Margin = new Padding(3, 6, 3, 3) };
-            folder.Controls.Add(_toolsFolder);
-            folder.Controls.Add(Button("Browse…", Color.White, Dark, ChooseToolsFolder));
-            layout.Controls.Add(folder, 0, 1);
-            FlowLayoutPanel links = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = true, Padding = new Padding(0, 2, 0, 0) };
-            links.Controls.Add(Button("Official download", Blue, Color.White, delegate { OpenUrl("https://www.cgsecurity.org/wiki/TestDisk_Download"); }));
-            links.Controls.Add(Button("GitHub source (GPL-2.0)", Color.White, Dark, delegate { OpenUrl("https://github.com/cgsecurity/testdisk"); }));
-            links.Controls.Add(Button("Documentation", Color.White, Dark, delegate { OpenUrl("https://www.cgsecurity.org/testdisk_doc/"); }));
-            layout.Controls.Add(links, 0, 2);
-            FlowLayoutPanel launch = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = true, Padding = new Padding(0, 3, 0, 0) };
-            launch.Controls.Add(Button("Launch TestDisk", Blue, Color.White, delegate { LaunchTool(new[] { "testdisk_win.exe", "testdisk.exe" }, "TestDisk"); }));
-            launch.Controls.Add(Button("Launch PhotoRec", Blue, Color.White, delegate { LaunchTool(new[] { "photorec_win.exe", "photorec.exe" }, "PhotoRec"); }));
-            launch.Controls.Add(Button("Launch QPhotoRec", Blue, Color.White, delegate { LaunchTool(new[] { "qphotorec_win.exe", "qphotorec.exe" }, "QPhotoRec"); }));
-            layout.Controls.Add(launch, 0, 3);
+
+            FlowLayoutPanel status = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill, WrapContents = true, Padding = new Padding(0, 4, 0, 0)
+            };
+            status.Controls.Add(new Label
+            {
+                Text = "Included recovery tools", AutoSize = true, ForeColor = Muted,
+                Padding = new Padding(0, 8, 4, 0)
+            });
+            _toolsFolder = new TextBox
+            {
+                Width = 620, Text = GetBundledToolsDirectory(), ReadOnly = true,
+                Font = Font, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(3, 5, 3, 3)
+            };
+            status.Controls.Add(_toolsFolder);
+            layout.Controls.Add(status, 0, 1);
+
+            FlowLayoutPanel actions = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill, WrapContents = true, Padding = new Padding(0, 7, 0, 0)
+            };
+            Button graphical = Button(
+                "Recover deleted files (GUI)", Blue, Color.White,
+                delegate { LaunchTool(new[] { "qphotorec_win.exe" }, "QPhotoRec — graphical file recovery"); });
+            graphical.Size = new Size(260, 42);
+            graphical.AutoSize = false;
+            actions.Controls.Add(graphical);
+
+            Button partition = Button(
+                "Find lost partitions / boot", Color.FromArgb(27, 126, 105), Color.White,
+                delegate { LaunchTool(new[] { "testdisk_win.exe" }, "TestDisk — partition and boot recovery"); });
+            partition.Size = new Size(270, 42);
+            partition.AutoSize = false;
+            actions.Controls.Add(partition);
+            layout.Controls.Add(actions, 0, 2);
+
+            FlowLayoutPanel links = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill, WrapContents = true, Padding = new Padding(0, 3, 0, 0)
+            };
+            links.Controls.Add(Button("TestDisk documentation", Color.White, Dark,
+                delegate { OpenUrl("https://www.cgsecurity.org/testdisk_doc/"); }));
+            links.Controls.Add(Button("Upstream source & license", Color.White, Dark,
+                delegate { OpenUrl("https://github.com/cgsecurity/testdisk"); }));
+            layout.Controls.Add(links, 0, 3);
+
             layout.Controls.Add(new Label
             {
-                Text = "For permanently deleted files: stop using the source disk immediately. TestDisk may undelete files when filesystem metadata remains; PhotoRec can scan for supported file signatures but may not preserve names/folders. New writes can overwrite deleted data; SSD TRIM, encryption, physical damage and unsupported formats reduce recovery chances. In TestDisk, analyze/list/copy before considering any Write action. Do not select a disk by guesswork.",
-                Dock = DockStyle.Fill, ForeColor = Dark, Padding = new Padding(8, 12, 8, 8), AutoEllipsis = true
+                Text = "Graphical recovery: QPhotoRec opens a normal graphical window. Partition recovery: TestDisk uses the upstream keyboard/menu interface (not a GUI), because that is how the original TestDisk program is designed. Both launch from this screen; neither requires a manual download. Always save recovered files to a different physical disk. Do not write changes to a damaged source before recovery.",
+                Dock = DockStyle.Fill, ForeColor = Dark, Padding = new Padding(8, 10, 8, 6),
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular), AutoEllipsis = true
             }, 0, 4);
             return page;
         }
@@ -530,34 +570,131 @@ namespace DriveMedic
             MessageBox.Show(this, "The file is queued. Select a different physical disk as the destination and start the copy.", "File queued", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void ChooseToolsFolder()
+        private string GetBundledToolsDirectory()
         {
-            using (FolderBrowserDialog d = new FolderBrowserDialog { Description = "Choose the folder where the official TestDisk/PhotoRec ZIP was fully extracted.", ShowNewFolderButton = false })
+            string architecture = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DriveMedic", "Tools", "TestDisk-7.2-" + architecture);
+        }
+
+        private static string FindToolDirectory(string root)
+        {
+            if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root)) return null;
+            try
             {
-                if (Directory.Exists(_toolsFolder.Text)) d.SelectedPath = _toolsFolder.Text;
-                if (d.ShowDialog(this) == DialogResult.OK) _toolsFolder.Text = d.SelectedPath;
+                string graphical = Directory.GetFiles(root, "qphotorec_win.exe", SearchOption.AllDirectories).FirstOrDefault();
+                if (!string.IsNullOrEmpty(graphical)) return Path.GetDirectoryName(graphical);
+                string testDisk = Directory.GetFiles(root, "testdisk_win.exe", SearchOption.AllDirectories).FirstOrDefault();
+                if (!string.IsNullOrEmpty(testDisk)) return Path.GetDirectoryName(testDisk);
             }
+            catch { }
+            return null;
+        }
+
+        private static string FindToolExecutable(string root, string[] names)
+        {
+            if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root)) return null;
+            foreach (string name in names)
+            {
+                try
+                {
+                    string found = Directory.GetFiles(root, name, SearchOption.AllDirectories).FirstOrDefault();
+                    if (!string.IsNullOrEmpty(found)) return found;
+                }
+                catch { }
+            }
+            return null;
+        }
+
+        private string EnsureBundledTestDisk()
+        {
+            string root = GetBundledToolsDirectory();
+            string available = FindToolDirectory(root);
+            if (!string.IsNullOrEmpty(available)) return available;
+
+            // This is DriveMedic's private cache. Remove only an incomplete cached bundle,
+            // then extract the checksum-verified upstream archive embedded during build.
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+            Directory.CreateDirectory(root);
+
+            string resourceName = Environment.Is64BitOperatingSystem
+                ? "DriveMedic.TestDiskBundle.x64.zip"
+                : "DriveMedic.TestDiskBundle.x86.zip";
+            string temporaryArchive = Path.Combine(
+                Path.GetTempPath(), "DriveMedic-TestDisk-" + Guid.NewGuid().ToString("N") + ".zip");
+
+            try
+            {
+                using (Stream embedded = typeof(RecoveryHubForm).Assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (embedded == null)
+                        throw new InvalidOperationException("The embedded TestDisk bundle is missing: " + resourceName);
+                    using (FileStream output = new FileStream(temporaryArchive, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                        embedded.CopyTo(output);
+                }
+
+                ZipFile.ExtractToDirectory(temporaryArchive, root);
+                available = FindToolDirectory(root);
+                if (string.IsNullOrEmpty(available))
+                    throw new InvalidDataException("The included recovery bundle was extracted, but QPhotoRec/TestDisk was not found.");
+                return available;
+            }
+            catch
+            {
+                try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch { }
+                throw;
+            }
+            finally
+            {
+                try { if (File.Exists(temporaryArchive)) File.Delete(temporaryArchive); } catch { }
+            }
+        }
+
+        private void StartGraphicalDeletedRecovery()
+        {
+            _tabs.SelectedIndex = 3;
+            LaunchTool(new[] { "qphotorec_win.exe" }, "QPhotoRec — graphical file recovery");
         }
 
         private void LaunchTool(string[] names, string display)
         {
-            string exe = null;
-            string folder = _toolsFolder.Text.Trim();
-            if (Directory.Exists(folder))
-                foreach (string name in names)
-                {
-                    string candidate = Path.Combine(folder, name);
-                    if (File.Exists(candidate)) { exe = candidate; break; }
-                }
-            if (exe == null)
+            string exe = FindToolExecutable(_toolsFolder == null ? null : _toolsFolder.Text.Trim(), names);
+            if (string.IsNullOrEmpty(exe))
             {
-                if (MessageBox.Show(this, display + " was not found. Download and fully extract the official TestDisk & PhotoRec portable ZIP, then select its folder. Open the official download page?", "Tool not found", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
-                    OpenUrl("https://www.cgsecurity.org/wiki/TestDisk_Download");
+                try
+                {
+                    string folder = EnsureBundledTestDisk();
+                    if (_toolsFolder != null) _toolsFolder.Text = folder;
+                    exe = FindToolExecutable(folder, names);
+                }
+                catch (Exception ex)
+                {
+                    ShowError("Could not prepare the included recovery tools",
+                        new InvalidOperationException("DriveMedic could not extract the recovery tools into your local profile. Check free disk space and try again.", ex));
+                    return;
+                }
+            }
+
+            if (string.IsNullOrEmpty(exe))
+            {
+                MessageBox.Show(this, "The included recovery tool could not be found. Reinstall DriveMedic using the complete Windows package.", "Recovery tool unavailable", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            string caution = display + " can access raw disks and some options can change disk data. Identify the source by model and size, recover output to another physical disk, and inspect before choosing any write/repair option. Launch elevated for low-level disk access?";
-            if (MessageBox.Show(this, caution, "Confirm advanced recovery", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
-            try { Process.Start(new ProcessStartInfo { FileName = exe, WorkingDirectory = Path.GetDirectoryName(exe), UseShellExecute = true, Verb = "runas" }); }
+
+            string caution = display.StartsWith("QPhotoRec", StringComparison.OrdinalIgnoreCase)
+                ? "QPhotoRec will open in its graphical interface and may need administrator permission to read a physical disk. Choose the old source disk carefully, and save recovered files to a different physical disk. Continue?"
+                : "TestDisk can analyze partitions and boot sectors. Its upstream interface is keyboard/menu-based, and some choices write to disk. Identify the source by model and size, secure important data first, and avoid Write/repair options until the target is positively verified. Launch with administrator permission?";
+
+            if (MessageBox.Show(this, caution, "Confirm recovery tool", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = exe, WorkingDirectory = Path.GetDirectoryName(exe),
+                    UseShellExecute = true, Verb = "runas"
+                });
+            }
             catch (Exception ex) { ShowError("Could not launch " + display, ex); }
         }
 
