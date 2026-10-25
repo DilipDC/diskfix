@@ -40,33 +40,172 @@ namespace DriveMedic
 
         public RecoveryHubForm()
         {
-            Text = "DriveMedic — Recovery Workbench";
-            MinimumSize = new Size(1050, 690);
-            Size = new Size(1320, 850);
+            Text = "DriveMedic — Simple Recovery";
+            MinimumSize = new Size(1020, 680);
+            Size = new Size(1280, 820);
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Canvas;
-            Font = new Font("Segoe UI", 9F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Font = new Font("Segoe UI", 9.5F);
             BuildShell();
         }
 
         private void BuildShell()
         {
-            TableLayoutPanel root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Canvas };
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 78));
+            TableLayoutPanel root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Canvas, Margin = new Padding(0) };
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 88));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             Controls.Add(root);
+
             Panel header = new Panel { Dock = DockStyle.Fill, BackColor = Navy, Padding = new Padding(20, 8, 18, 8) };
-            header.Controls.Add(new Label { Text = "DriveMedic Recovery Workbench", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold), AutoSize = true, Location = new Point(18, 7) });
-            header.Controls.Add(new Label { Text = "Copy first · Recover to another disk · Diagnose before repair", ForeColor = Color.FromArgb(190, 209, 232), AutoSize = true, Location = new Point(21, 43) });
+            Label mark = new Label
+            {
+                Text = "DM", ForeColor = Color.White, BackColor = Blue,
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter, Size = new Size(46, 46), Location = new Point(20, 18)
+            };
+            header.Controls.Add(mark);
+            header.Controls.Add(new Label
+            {
+                Text = "DriveMedic", ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 19F, FontStyle.Bold),
+                AutoSize = true, Location = new Point(80, 10)
+            });
+            header.Controls.Add(new Label
+            {
+                Text = "File recovery and Windows startup help",
+                ForeColor = Color.FromArgb(190, 209, 232),
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                AutoSize = true, Location = new Point(82, 45)
+            });
+            Label badge = new Label
+            {
+                Text = "COPY FIRST  •  REPAIR LATER",
+                ForeColor = Color.White, BackColor = Color.FromArgb(37, 57, 82),
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                Padding = new Padding(10, 7, 10, 7), AutoSize = true,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right, Location = new Point(Width - 255, 25)
+            };
+            header.Controls.Add(badge);
+            header.Resize += delegate { badge.Location = new Point(Math.Max(680, header.ClientSize.Width - badge.Width - 20), 25); };
             root.Controls.Add(header, 0, 0);
 
-            _tabs = new TabControl { Dock = DockStyle.Fill, Padding = new Point(14, 7), Font = new Font("Segoe UI", 9.5F) };
+            _tabs = new TabControl
+            {
+                Dock = DockStyle.Fill, Padding = new Point(16, 8),
+                Font = new Font("Segoe UI", 9.5F), HotTrack = true
+            };
+            _tabs.TabPages.Add(BuildHomeTab());
             _tabs.TabPages.Add(BuildCopyTab());
             _tabs.TabPages.Add(BuildFileTab());
             _tabs.TabPages.Add(BuildToolsTab());
             _tabs.TabPages.Add(BuildBootTab());
             _tabs.TabPages.Add(BuildExistingTab());
+            _tabs.SelectedIndex = 0;
             root.Controls.Add(_tabs, 0, 1);
+        }
+
+        private TabPage BuildHomeTab()
+        {
+            TabPage page = MakeTab("Home");
+            TableLayoutPanel layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 4,
+                Padding = new Padding(12), BackColor = Canvas
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 88F));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 72F));
+            page.Controls.Add(layout);
+
+            Panel intro = new Panel { Dock = DockStyle.Fill, BackColor = Canvas, Margin = new Padding(4) };
+            intro.Controls.Add(new Label
+            {
+                Text = "What would you like to do?",
+                Font = new Font("Segoe UI Semibold", 17F, FontStyle.Bold),
+                ForeColor = Dark, AutoSize = true, Location = new Point(5, 3)
+            });
+            intro.Controls.Add(new Label
+            {
+                Text = "Choose a task below. DriveMedic guides you through the next steps.",
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                ForeColor = Muted, AutoSize = true, Location = new Point(7, 38)
+            });
+            layout.Controls.Add(intro, 0, 0);
+            layout.SetColumnSpan(intro, 2);
+
+            layout.Controls.Add(MakeTaskCard(
+                "Recover files from an old disk",
+                "Copy documents, photos, downloads, and folders from a connected HDD or SSD to another drive.",
+                "Start file recovery", Blue, delegate { _tabs.SelectedIndex = 1; }), 0, 1);
+
+            layout.Controls.Add(MakeTaskCard(
+                "Recover deleted files",
+                "Try advanced tools for deleted files, lost partitions, or a drive Windows cannot open.",
+                "Open recovery tools", Color.FromArgb(27, 126, 105), delegate { _tabs.SelectedIndex = 3; }), 1, 1);
+
+            layout.Controls.Add(MakeTaskCard(
+                "Fix startup, EFI, or GRUB",
+                "Get guided steps for Windows boot problems, EFI/BCD, legacy boot, Linux GRUB, and RAW disks.",
+                "Open boot help", Color.FromArgb(112, 82, 170), delegate { _tabs.SelectedIndex = 4; }), 0, 2);
+
+            layout.Controls.Add(MakeTaskCard(
+                "Check disk health",
+                "Review detected drives, capacity, file system, health warnings, and diagnostics.",
+                "View disk information", Color.FromArgb(190, 112, 35), delegate { _tabs.SelectedIndex = 5; }), 1, 2);
+
+            Panel safety = new Panel
+            {
+                Dock = DockStyle.Fill, BackColor = Color.FromArgb(255, 248, 230),
+                BorderStyle = BorderStyle.FixedSingle, Margin = new Padding(5), Padding = new Padding(12)
+            };
+            safety.Controls.Add(new Label
+            {
+                Text = "Important: save recovered data to a different physical disk. Do not format or repair the old disk before copying important files. If the disk clicks, disconnects, or is failing, stop and consider professional recovery.",
+                Dock = DockStyle.Fill, ForeColor = Color.FromArgb(112, 75, 20),
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular),
+                TextAlign = ContentAlignment.MiddleLeft
+            });
+            layout.Controls.Add(safety, 0, 3);
+            layout.SetColumnSpan(safety, 2);
+            return page;
+        }
+
+        private Panel MakeTaskCard(string title, string description, string actionText, Color accent, Action action)
+        {
+            Panel card = new Panel
+            {
+                Dock = DockStyle.Fill, BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle, Margin = new Padding(5), Padding = new Padding(16)
+            };
+            card.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 5, BackColor = accent });
+            Label titleLabel = new Label
+            {
+                Text = title, Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                ForeColor = Dark, AutoSize = true, Location = new Point(22, 13)
+            };
+            Label descriptionLabel = new Label
+            {
+                Text = description, Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                ForeColor = Muted, Location = new Point(22, 43), Size = new Size(420, 58),
+                AutoEllipsis = true
+            };
+            Button go = Button(actionText, accent, Color.White, action);
+            go.AutoSize = false;
+            go.Size = new Size(205, 36);
+            go.Location = new Point(22, 112);
+            card.Controls.Add(titleLabel);
+            card.Controls.Add(descriptionLabel);
+            card.Controls.Add(go);
+            card.Resize += delegate
+            {
+                descriptionLabel.Width = Math.Max(120, card.ClientSize.Width - 44);
+                go.Location = new Point(22, Math.Max(100, card.ClientSize.Height - 49));
+            };
+            return card;
         }
 
         private TabPage BuildCopyTab()
@@ -82,7 +221,7 @@ namespace DriveMedic
             page.Controls.Add(layout);
             layout.Controls.Add(new Label
             {
-                Text = "Connect the old HDD/SSD using a suitable SATA-to-USB adapter or enclosure. Queue files, folders, or all visible items on a mounted drive. Choose a destination on a different physical disk. This workflow copies readable data and does not intentionally change the source.",
+                Text = "Step 1: choose your old drive and add files or folders. Step 2: choose a destination on a different physical disk. Step 3: start the copy. DriveMedic does not intentionally change source files.",
                 Dock = DockStyle.Fill, ForeColor = Dark, Padding = new Padding(4, 5, 4, 4), AutoEllipsis = true
             }, 0, 0);
 
@@ -91,7 +230,7 @@ namespace DriveMedic
             add.Controls.Add(new Label { Text = "Drive", AutoSize = true, ForeColor = Muted, Padding = new Padding(0, 8, 0, 0) });
             add.Controls.Add(_drive);
             add.Controls.Add(Button("Refresh", Color.White, Dark, RefreshDrives));
-            add.Controls.Add(Button("Add whole drive", Blue, Color.White, AddWholeDrive));
+            add.Controls.Add(Button("Add drive contents", Blue, Color.White, AddWholeDrive));
             add.Controls.Add(Button("Add folder", Color.White, Dark, AddFolder));
             add.Controls.Add(Button("Add files…", Color.White, Dark, AddFiles));
             add.Controls.Add(Button("Remove selected", Color.White, Dark, RemoveSelected));
@@ -102,7 +241,7 @@ namespace DriveMedic
             layout.Controls.Add(_sources, 0, 2);
             FlowLayoutPanel dest = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, Padding = new Padding(0, 3, 0, 0) };
             dest.Controls.Add(new Label { Text = "Destination", AutoSize = true, ForeColor = Muted, Padding = new Padding(0, 8, 0, 0) });
-            _destination = new TextBox { Width = 700, Font = Font, Margin = new Padding(3, 6, 3, 3) };
+            _destination = new TextBox { Width = 540, Font = Font, Margin = new Padding(3, 6, 3, 3) };
             dest.Controls.Add(_destination);
             dest.Controls.Add(Button("Browse…", Color.White, Dark, ChooseDestination));
             layout.Controls.Add(dest, 0, 3);
@@ -110,8 +249,8 @@ namespace DriveMedic
             FlowLayoutPanel actions = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = true, Padding = new Padding(0, 3, 0, 0) };
             _verify = new CheckBox { Text = "Verify copies with SHA-256", Checked = true, AutoSize = true, ForeColor = Dark, Padding = new Padding(0, 6, 8, 0) };
             actions.Controls.Add(_verify);
-            _copyButton = Button("Copy selected items to new disk", Blue, Color.White, async delegate { await CopyAsync(); });
-            _copyButton.Width = 250;
+            _copyButton = Button("Start safe copy", Blue, Color.White, async delegate { await CopyAsync(); });
+            _copyButton.Width = 185;
             actions.Controls.Add(_copyButton);
             actions.Controls.Add(Button("Save log…", Color.White, Dark, delegate { SaveText("DriveMedic-copy-report.txt", _copyLog.Text); }));
             layout.Controls.Add(actions, 0, 4);
@@ -149,7 +288,7 @@ namespace DriveMedic
             layout.Controls.Add(checks, 0, 2);
             FlowLayoutPanel actions = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(0, 4, 0, 0) };
             actions.Controls.Add(Button("Queue for safe recovery copy", Blue, Color.White, QueueFile));
-            actions.Controls.Add(Button("Deleted-file tools", Color.White, Dark, delegate { _tabs.SelectedIndex = 2; }));
+            actions.Controls.Add(Button("Deleted-file tools", Color.White, Dark, delegate { _tabs.SelectedIndex = 3; }));
             actions.Controls.Add(Button("Save report…", Color.White, Dark, delegate { SaveText("DriveMedic-file-report.txt", _fileReport.Text); }));
             layout.Controls.Add(actions, 0, 3);
             _fileReport = new TextBox { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, WordWrap = false, Font = new Font("Consolas", 9F), BackColor = Color.White, Text = "No file inspected. For a failing disk, recover critical files before doing full-file scans." };
@@ -159,7 +298,7 @@ namespace DriveMedic
 
         private TabPage BuildToolsTab()
         {
-            TabPage page = MakeTab("Deleted files & partitions");
+            TabPage page = MakeTab("Deleted-file tools");
             TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, Padding = new Padding(12), BackColor = Canvas };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));
@@ -198,7 +337,7 @@ namespace DriveMedic
 
         private TabPage BuildBootTab()
         {
-            TabPage page = MakeTab("EFI / Windows / GRUB");
+            TabPage page = MakeTab("Boot & EFI help");
             TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, Padding = new Padding(10), BackColor = Canvas };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 60));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
@@ -236,7 +375,7 @@ namespace DriveMedic
 
         private TabPage BuildExistingTab()
         {
-            TabPage page = MakeTab("Drive inventory");
+            TabPage page = MakeTab("Disk health");
             MainForm legacy = new MainForm();
             legacy.TopLevel = false;
             legacy.FormBorderStyle = FormBorderStyle.None;
@@ -518,11 +657,14 @@ namespace DriveMedic
             Button button = new Button
             {
                 Text = title, BackColor = back, ForeColor = fore, FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold), Height = 34,
-                AutoSize = true, Padding = new Padding(9, 3, 9, 3), Margin = new Padding(3),
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold), Height = 36,
+                AutoSize = true, Padding = new Padding(10, 4, 10, 4), Margin = new Padding(4), Cursor = Cursors.Hand,
                 UseVisualStyleBackColor = false
             };
             button.FlatAppearance.BorderColor = Color.FromArgb(205, 216, 229);
+            button.FlatAppearance.BorderSize = back == Blue ? 0 : 1;
+            button.FlatAppearance.MouseOverBackColor = back == Blue ? Color.FromArgb(27, 88, 151) : Color.FromArgb(230, 238, 247);
+            button.FlatAppearance.MouseDownBackColor = back == Blue ? Color.FromArgb(19, 67, 117) : Color.FromArgb(216, 228, 241);
             button.Click += delegate { if (action != null) action(); };
             return button;
         }
