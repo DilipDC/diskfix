@@ -1,0 +1,25 @@
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+artifact/
+DriveMedic-windows.zip
+DriveMedic-windows.zip.sha256
+
+# Python validation caches
+__pycache__/
+*.py[cod]
+
+# Local environment/secrets
+.env
+.env.*
+!.env.example
+
+# Keep local recovery reports and customer artifacts out of source control
+DriveMedic-report-*
+recovery-output/
+customer-data/

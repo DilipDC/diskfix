@@ -1,0 +1,56 @@
+name: Windows build and safety tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python for source validation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate source structure three times
+        shell: pwsh
+        run: |
+          1..3 | ForEach-Object {
+            Write-Host "Source validation pass $_ of 3"
+            python scripts/validate_project.py
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Build Release
+        shell: pwsh
+        run: msbuild DriveMedic.sln /restore /m /p:Configuration=Release /verbosity:minimal
+      - name: Run safety tests three times
+        shell: pwsh
+        run: |
+          1..3 | ForEach-Object {
+            Write-Host "Test pass $_ of 3"
+            & .\DriveMedic.Tests\bin\Release\DriveMedic.Tests.exe
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Package Windows application
+        shell: pwsh
+        run: |
+          $stage = Join-Path $PWD "artifact"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item "bin\Release\DriveMedic.exe" $stage
+          Copy-Item -Path @("README.md", "LICENSE", "CHANGELOG.md", "TECHNICIAN_WORKFLOW.md") -Destination $stage
+          if (Test-Path "bin\Release\DriveMedic.exe.config") { Copy-Item "bin\Release\DriveMedic.exe.config" $stage }
+          Compress-Archive -Path (Join-Path $stage "*") -DestinationPath "DriveMedic-windows.zip" -Force
+          $hash = (Get-FileHash "DriveMedic-windows.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -Path "DriveMedic-windows.zip.sha256" -Value "$hash  DriveMedic-windows.zip" -Encoding ascii
+      - name: Upload Windows build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DriveMedic-windows
+          path: |
+            DriveMedic-windows.zip
+            DriveMedic-windows.zip.sha256
+          if-no-files-found: error
